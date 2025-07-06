@@ -1,2 +1,2 @@
 #!/bin/bash
-python newermain.py
+python newermain.py run
