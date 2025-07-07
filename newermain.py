@@ -141,6 +141,7 @@ def get_alerts():
 # === MAIN === #
 if __name__ == '__main__':
     start_background_scanner()
-    app.run(debug=True, port=5000)
+    app.run(host='0.0.0.0', port=5000)
+
 
 # pip install flask yfinance pandas requests gspread oauth2client
