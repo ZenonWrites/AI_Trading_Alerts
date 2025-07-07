@@ -17,7 +17,8 @@ from oauth2client.service_account import ServiceAccountCredentials
 # === CONFIGURATION === #
 
 WATCHLIST = [  # Replace with Nifty 500 if needed
-    'RELIANCE.NS', 'INFY.NS', 'TCS.NS', 'HDFCBANK.NS', 'ICICIBANK.NS'
+
+'VBL.NS', 'PPLPHARMA.NS','SYNGENE.NS', 'COLPAL.NS', 'PATANJALI.NS','EASEMYTRIP.NS','UNITDSPR.NS','IDEA.NS','CGCL.NS','ARE&M.NS','TEJASNET.NS','GICRE.NS','PRAJIND.NS','JYOTHYLAB.NS','EMAMILTD.NS','CARBORUNIV.NS'
 ]
 
 QUANTITY = 1
