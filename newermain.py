@@ -10,6 +10,8 @@ from datetime import datetime
 from typing import List, Dict
 from smc import SMCDiscountStrategy
 import gspread
+import json
+import os
 from oauth2client.service_account import ServiceAccountCredentials
 
 # === CONFIGURATION === #
@@ -21,26 +23,24 @@ WATCHLIST = [  # Replace with Nifty 500 if needed
 QUANTITY = 1
 SCAN_INTERVAL = 300
 
-# Telegram
-TELEGRAM_BOT_TOKEN = 'your_telegram_bot_token'
-TELEGRAM_CHAT_ID = 'your_chat_id'
+# Telegram from environment
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-# Email
-EMAIL_SENDER = 'you@gmail.com'
-EMAIL_PASSWORD = 'your_gmail_app_password'
-EMAIL_RECEIVER = 'receiver@gmail.com'
+# Email from environment
+EMAIL_SENDER = os.getenv("EMAIL_SENDER")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+EMAIL_RECEIVER = os.getenv("EMAIL_RECEIVER")
 
-# Google Sheets
-SHEET_NAME = 'AI_Trading_Alerts'
-GSHEET_CREDENTIALS = 'ai-trading-bot-465113-fe307fea36b5.json'
-
-app = Flask(__name__)
-
-# === INIT GOOGLE SHEETS === #
+# Google Sheets from environment
+SHEET_NAME = os.getenv("SHEET_NAME", "AI_Trading_Alerts")
+creds_dict = json.loads(os.getenv("GOOGLE_CREDS_JSON"))
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name(GSHEET_CREDENTIALS, scope)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 gclient = gspread.authorize(creds)
 sheet = gclient.open(SHEET_NAME).sheet1
+
+app = Flask(__name__)
 
 # === ALERT FUNCTIONS === #
 def send_telegram_alert(message: str):
