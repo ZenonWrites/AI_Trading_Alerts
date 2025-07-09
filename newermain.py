@@ -73,12 +73,13 @@ def send_email_alert(subject, body):
 
 
 def log_to_gsheet(ticker, price, tp, sl, volume):
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    row = [timestamp, ticker, f"{price:.2f}", f"{tp:.2f}", f"{sl:.2f}", str(volume)]
+    print("[GSHEET] Logging to sheet...")
     try:
-        sheet.append_row(row)
+        sheet.append_row([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ticker, price, tp, sl, volume])
+        print("[GSHEET] Logged.")
     except Exception as e:
-        print("Google Sheets Error:", e)
+        print("[GSHEET] Error:", e)
+
 
 # === STRATEGY LOGIC === #
 def check_buy_signal(ticker: str) -> Dict:
