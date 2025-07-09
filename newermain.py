@@ -55,17 +55,22 @@ def send_telegram_alert(message):
         print("[TELEGRAM] Failed:", e)
 
 
-def send_email_alert(subject: str, body: str):
-    msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = EMAIL_SENDER
-    msg['To'] = EMAIL_RECEIVER
+def send_email_alert(subject, body):
+    print("[EMAIL] Sending alert...")
     try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-            smtp.login(EMAIL_SENDER, EMAIL_PASSWORD)
-            smtp.send_message(msg)
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = EMAIL_SENDER
+        msg['To'] = EMAIL_RECEIVER
+
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+            server.send_message(msg)
+
+        print("[EMAIL] Sent!")
     except Exception as e:
-        print("Email Error:", e)
+        print("[EMAIL] Error:", e)
+
 
 def log_to_gsheet(ticker, price, tp, sl, volume):
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
