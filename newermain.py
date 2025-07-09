@@ -44,13 +44,16 @@ sheet = gclient.open(SHEET_NAME).sheet1
 app = Flask(__name__)
 
 # === ALERT FUNCTIONS === #
-def send_telegram_alert(message: str):
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    data = {"chat_id": TELEGRAM_CHAT_ID, "text": message}
+def send_telegram_alert(message):
+    print("[TELEGRAM] Sending message...")
     try:
-        requests.post(url, data=data)
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        data = {"chat_id": TELEGRAM_CHAT_ID, "text": message}
+        response = requests.post(url, data=data)
+        print("[TELEGRAM] Response:", response.status_code, response.text)
     except Exception as e:
-        print("Telegram Error:", e)
+        print("[TELEGRAM] Failed:", e)
+
 
 def send_email_alert(subject: str, body: str):
     msg = MIMEText(body)
