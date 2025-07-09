@@ -106,23 +106,33 @@ alerts_log = []
 
 def scan_stocks():
     print(f"[SCAN] Running at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    no_signals = True  # Add this
+    no_signals = True
 
     for stock in WATCHLIST:
         try:
             res = check_buy_signal(stock)
+            print(f"[CHECK] {stock} → Signal: {res.get('signal')} | Price: {res.get('price')}")
+
             if res.get('signal'):
                 no_signals = False
-                msg = f"BUY SIGNAL: {res['ticker']}\nPrice: ₹{res['price']:.2f}\nTP: ₹{res['take_profit']:.2f}\nSL: ₹{res['stop_loss']:.2f}\nVolume: {res['volume']}"
+                msg = (
+                    f"BUY SIGNAL: {res['ticker']}\n"
+                    f"Price: ₹{res['price']:.2f}\n"
+                    f"TP: ₹{res['take_profit']:.2f}\n"
+                    f"SL: ₹{res['stop_loss']:.2f}\n"
+                    f"Volume: {res['volume']}"
+                )
                 alerts_log.append({'time': str(datetime.now()), 'stock': stock, 'price': res['price']})
                 send_telegram_alert(msg)
                 send_email_alert(f"[BUY ALERT] {stock}", msg)
                 log_to_gsheet(stock, res['price'], res['take_profit'], res['stop_loss'], res['volume'])
+
         except Exception as e:
-            print(f"Error scanning {stock}:", e)
+            print(f"[ERROR] Scanning {stock}: {e}")
 
     if no_signals:
         print("[SCAN] No signals found this round.")
+
 
 
 def start_background_scanner():
