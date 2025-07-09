@@ -91,14 +91,16 @@ def check_buy_signal(ticker: str) -> Dict:
     if buy:
         price = close_data[-1]
         tp, sl = strategy.calculate_tp_sl(price)
+        # TEMP: Force fake signal for testing
         return {
             'ticker': ticker,
-            'price': price,
-            'take_profit': tp,
-            'stop_loss': sl,
-            'volume': int(volume),
+            'price': 1234.56,
+            'take_profit': 1296.29,
+            'stop_loss': 1209.87,
+            'volume': 123456,
             'signal': True
         }
+
     return {'ticker': ticker, 'price': close_data[-1], 'signal': False}
 
 # === SCANNER === #
