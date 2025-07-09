@@ -81,16 +81,33 @@ def log_to_gsheet(ticker, price, tp, sl, volume):
         print("[GSHEET] Error:", e)
 
 # === STRATEGY === #
-def check_buy_signal(ticker):
-    print(f"[DEBUG] Forced buy signal for {ticker}")
-    return {
-        'ticker': ticker,
-        'price': 1234.56,
-        'take_profit': 1296.29,
-        'stop_loss': 1209.87,
-        'volume': 123456,
-        'signal': True
-    }
+def check_buy_signal(ticker: str) -> Dict:
+    df = yf.download(ticker, period='2mo', interval='1d', auto_adjust=True)
+    if df.empty or len(df) < 30:
+        return {'ticker': ticker, 'status': 'insufficient_data'}
+
+    strategy = SMCDiscountStrategy(lookback=30, min_volume=100000, tp_percent=5.0, sl_percent=2.0)
+
+    high_data = df['High'].tolist()
+    low_data = df['Low'].tolist()
+    open_data = df['Open'].tolist()
+    close_data = df['Close'].tolist()
+    volume = df['Volume'].iloc[-1]
+
+    buy = strategy.generate_buy_signal(high_data, low_data, open_data, close_data, volume, timestamp=datetime.now())
+
+    if buy:
+        price = close_data[-1]
+        tp, sl = strategy.calculate_tp_sl(price)
+        return {
+            'ticker': ticker,
+            'price': price,
+            'take_profit': tp,
+            'stop_loss': sl,
+            'volume': int(volume),
+            'signal': True
+        }
+    return {'ticker': ticker, 'price': close_data[-1], 'signal': False}
 
 # === SCANNING === #
 def scan_stocks():
