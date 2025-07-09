@@ -15,31 +15,33 @@ import os
 from oauth2client.service_account import ServiceAccountCredentials
 
 # === CONFIGURATION === #
-
-WATCHLIST = [  # Replace with Nifty 500 if needed
-
-'VBL.NS', 'PPLPHARMA.NS','SYNGENE.NS', 'COLPAL.NS', 'PATANJALI.NS','EASEMYTRIP.NS','UNITDSPR.NS','IDEA.NS','CGCL.NS','ARE&M.NS','TEJASNET.NS','GICRE.NS','PRAJIND.NS','JYOTHYLAB.NS','EMAMILTD.NS','CARBORUNIV.NS'
+WATCHLIST = [
+    'VBL.NS', 'PPLPHARMA.NS', 'SYNGENE.NS', 'COLPAL.NS', 'PATANJALI.NS',
+    'EASEMYTRIP.NS', 'UNITDSPR.NS', 'IDEA.NS', 'CGCL.NS', 'ARE&M.NS',
+    'TEJASNET.NS', 'GICRE.NS', 'PRAJIND.NS', 'JYOTHYLAB.NS', 'EMAMILTD.NS', 'CARBORUNIV.NS'
 ]
 
 QUANTITY = 1
-SCAN_INTERVAL = 300
+SCAN_INTERVAL = 300  # 5 minutes
 
-# Telegram from environment
+# Environment variables for secrets
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-
-# Email from environment
 EMAIL_SENDER = os.getenv("EMAIL_SENDER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 EMAIL_RECEIVER = os.getenv("EMAIL_RECEIVER")
-
-# Google Sheets from environment
 SHEET_NAME = os.getenv("SHEET_NAME", "AI_Trading_Alerts")
+
+# Google Sheets credentials
 creds_dict = json.loads(os.getenv("GOOGLE_CREDS_JSON"))
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 gclient = gspread.authorize(creds)
 sheet = gclient.open(SHEET_NAME).sheet1
+
+# Global log
+alerts_log = []
+MAX_LOG_LENGTH = 100
 
 app = Flask(__name__)
 
@@ -52,8 +54,7 @@ def send_telegram_alert(message):
         response = requests.post(url, data=data)
         print("[TELEGRAM] Response:", response.status_code, response.text)
     except Exception as e:
-        print("[TELEGRAM] Failed:", e)
-
+        print("[TELEGRAM] Error:", e)
 
 def send_email_alert(subject, body):
     print("[EMAIL] Sending alert...")
@@ -71,7 +72,6 @@ def send_email_alert(subject, body):
     except Exception as e:
         print("[EMAIL] Error:", e)
 
-
 def log_to_gsheet(ticker, price, tp, sl, volume):
     print("[GSHEET] Logging to sheet...")
     try:
@@ -80,8 +80,7 @@ def log_to_gsheet(ticker, price, tp, sl, volume):
     except Exception as e:
         print("[GSHEET] Error:", e)
 
-
-# === STRATEGY LOGIC === #
+# === STRATEGY === #
 def check_buy_signal(ticker):
     print(f"[DEBUG] Forced buy signal for {ticker}")
     return {
@@ -93,7 +92,7 @@ def check_buy_signal(ticker):
         'signal': True
     }
 
-
+# === SCANNING === #
 def scan_stocks():
     print(f"[SCAN] Running at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     no_signals = True
@@ -112,7 +111,15 @@ def scan_stocks():
                     f"SL: ₹{res['stop_loss']:.2f}\n"
                     f"Volume: {res['volume']}"
                 )
-                alerts_log.append({'time': str(datetime.now()), 'stock': stock, 'price': res['price']})
+
+                alerts_log.append({
+                    'time': str(datetime.now()),
+                    'stock': stock,
+                    'price': res['price']
+                })
+                if len(alerts_log) > MAX_LOG_LENGTH:
+                    alerts_log.pop(0)
+
                 send_telegram_alert(msg)
                 send_email_alert(f"[BUY ALERT] {stock}", msg)
                 log_to_gsheet(stock, res['price'], res['take_profit'], res['stop_loss'], res['volume'])
@@ -123,8 +130,7 @@ def scan_stocks():
     if no_signals:
         print("[SCAN] No signals found this round.")
 
-
-
+# === BACKGROUND SCANNER === #
 def start_background_scanner():
     def job():
         while True:
@@ -135,12 +141,12 @@ def start_background_scanner():
 # === FLASK ROUTES === #
 @app.route('/')
 def home():
-    return "AI Trading Bot running. Use /scan or /alerts"
+    return "AI Trading Bot is live. Use /scan to scan manually or /alerts to view recent alerts."
 
 @app.route('/scan')
 def scan_now():
     scan_stocks()
-    return jsonify({"status": "Scan triggered manually."})
+    return jsonify({"status": "Scan triggered."})
 
 @app.route('/alerts')
 def get_alerts():
@@ -150,6 +156,3 @@ def get_alerts():
 if __name__ == '__main__':
     start_background_scanner()
     app.run(host='0.0.0.0', port=5000)
-
-
-# pip install flask yfinance pandas requests gspread oauth2client
