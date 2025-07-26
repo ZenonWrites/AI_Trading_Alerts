@@ -13,6 +13,8 @@ import gspread
 import json
 import os
 from oauth2client.service_account import ServiceAccountCredentials
+from indicators.smc_smart_money import check_buy_signal as smc_check_signal
+
 
 # === CONFIGURATION === #
 WATCHLIST = [
@@ -82,33 +84,21 @@ def log_to_gsheet(ticker, price, tp, sl, volume):
         print("[GSHEET] Error:", e)
 
 # === STRATEGY === #
-def check_buy_signal(ticker: str) -> Dict:
-    df = yf.download(ticker, period='2mo', interval='1d', auto_adjust=True)
-    if df.empty or len(df) < 30:
-        return {'ticker': ticker, 'status': 'insufficient_data'}
-
-    strategy = SMCDiscountStrategy(lookback=30, min_volume=100000, tp_percent=5.0, sl_percent=2.0)
-
-    high_data = df['High'].tolist()
-    low_data = df['Low'].tolist()
-    open_data = df['Open'].tolist()
-    close_data = df['Close'].tolist()
-    volume = df['Volume'].iloc[-1]
-
-    buy = strategy.generate_buy_signal(high_data, low_data, open_data, close_data, volume, timestamp=datetime.now())
-
-    if buy:
-        price = close_data[-1]
-        tp, sl = strategy.calculate_tp_sl(price)
+def check_buy_signal(ticker):
+    df = yf.download(ticker, period="6mo", interval="1d")
+    
+    if smc_check_signal(df):
+        price = df["Close"].iloc[-1]
         return {
             'ticker': ticker,
             'price': price,
-            'take_profit': tp,
-            'stop_loss': sl,
-            'volume': int(volume),
+            'take_profit': round(price * 1.05, 2),
+            'stop_loss': round(price * 0.98, 2),
+            'volume': 100,  # or fetch real volume
             'signal': True
         }
-    return {'ticker': ticker, 'price': close_data[-1], 'signal': False}
+    
+    return {'signal': False}
 
 # === SCANNING === #
 def scan_stocks():
