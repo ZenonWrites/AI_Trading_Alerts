@@ -112,44 +112,25 @@ def scan_stocks():
 
     for stock in WATCHLIST:
         try:
-            res = check_buy_signal(stock)
-            print(f"[CHECK] {stock} → Signal: {res.get('signal')} | Price: {res.get('price')}")
+            # TEMP: Force dummy dataframe
+            df = yf.download(stock, period="6mo", interval="1d")
+            signal = check_buy_signal(df)
 
-            if res.get('signal'):
+            print(f"[CHECK] {stock} → Signal: {signal}")
+            
+            if signal:
                 no_signals = False
-                msg = (
-                    f"BUY SIGNAL: {res['ticker']}\n"
-                    f"Price: ₹{res['price']:.2f}\n"
-                    f"TP: ₹{res['take_profit']:.2f}\n"
-                    f"SL: ₹{res['stop_loss']:.2f}\n"
-                    f"Volume: {res['volume']}"
-                )
-
-                alerts_log.append({
-                    'time': str(datetime.now()),
-                    'stock': stock,
-                    'price': res['price']
-                })
-                if len(alerts_log) > MAX_LOG_LENGTH:
-                    alerts_log.pop(0)
-
+                msg = f"🚨 BUY SIGNAL for {stock}\n📈 Check it now!"
+                alerts_log.append({'time': str(datetime.now()), 'stock': stock})
                 send_telegram_alert(msg)
-                send_email_alert(f"[BUY ALERT] {stock}", msg)
-                log_to_gsheet(stock, res['price'], res['take_profit'], res['stop_loss'], res['volume'])
+                send_email_alert(f"[ALERT] {stock}", msg)
+                log_to_gsheet(stock, df['Close'].iloc[-1], "-", "-", df['Volume'].iloc[-1])
 
         except Exception as e:
-            print(f"[ERROR] Scanning {stock}: {e}")
+            print(f"[ERROR] {stock}: {e}")
 
     if no_signals:
-        print("[SCAN] No signals found this round.")
-
-# === BACKGROUND SCANNER === #
-def start_background_scanner():
-    def job():
-        while True:
-            scan_stocks()
-            time.sleep(SCAN_INTERVAL)
-    threading.Thread(target=job, daemon=True).start()
+        print("[SCAN] No signals found.")
 
 # === FLASK ROUTES === #
 @app.route('/')
