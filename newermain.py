@@ -132,6 +132,17 @@ def scan_stocks():
     if no_signals:
         print("[SCAN] No signals found.")
 
+def start_background_scanner():
+    import threading
+    import time
+
+    def job():
+        while True:
+            scan_stocks()
+            time.sleep(SCAN_INTERVAL)  # Make sure SCAN_INTERVAL is defined (e.g., 300 seconds)
+
+    threading.Thread(target=job, daemon=True).start()
+
 # === FLASK ROUTES === #
 @app.route('/')
 def home():
