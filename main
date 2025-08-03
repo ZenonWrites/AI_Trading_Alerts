@@ -1,8 +1,9 @@
 from flask import Flask
-from newermain import scan_stocks  # your scan function
-import functions_framework  # required for GCP
+from newermain import scan_stocks  
+import functions_framework 
 
 @functions_framework.http
 def run_scan(request):
     scan_stocks()
     return "Scan completed!", 200
+
