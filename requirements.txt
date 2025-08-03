@@ -6,3 +6,6 @@ gspread
 oauth2client
 scipy
 ta
+functions-framework
+smtplib
+email
